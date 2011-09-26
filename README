@@ -1,0 +1,68 @@
+NAME
+    Redis::Connector - wrapper around Redis
+
+SYNOPSIS
+        use Redis::Connector;
+        my $conn = Redis::Connector->new();
+        # or my $conn = Redis::Connector->new({});
+        $conn->handle->incr('foo');
+        eval {
+            my @values = $conn->transaction(sub {
+                my $r = shift;
+                $r->incr('foo');
+            });
+            # transaction complete
+            # @values contains result of exec()
+        };
+        if ( $@ ) {
+            # transaction failed, discard() already executed
+        }
+
+DESCRIPTION
+    Reconnect to Redis DB on ping() failures. Provide handy transaction
+    procession. Does not delegate to methods of Redis.
+
+METHODS
+  "new(arg => value)"
+  "new({ arg => value })"
+    Create object. Arguments are the same as for "Redis->new()". Additional
+    arguments:
+
+    password
+        If present will automatically call auth() after connect.
+
+  "handle()"
+    Return Redis instance. First it call ping() and in case of failure tries
+    create new Redis object.
+
+  "transaction(CODE)"
+    If error occured during transaction every following multi() will throw
+    exception. So you should explicitly run discard().
+
+        try {
+            $r->multi();
+            ...
+            $r->exec();
+        }
+        catch {
+            # Oops!
+            $r->discard();
+        };
+
+    This method do it for you. It executes CODE in transaction with Redis
+    instance in first argument (so it will not reconnect on failure). On
+    failure it will call discard() and rethrow exception. On success return
+    result of exec().
+
+SEE ALSO
+    Redis
+
+AUTHOR
+    Andrey Fedorov <secrethost@gmail.com>
+
+COPYRIGHT AND LICENSE
+    Copyright (C) 2011 by Andrey Fedorov
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
