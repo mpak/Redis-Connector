@@ -1,13 +1,23 @@
 use strict;
-use Test::More tests => 15;
+use Test::More;
 use Redis::Connector;
+
+
+my $TEST_SERVER = $ENV{REDIS_CONNECTOR_TEST_SERVER};
+
+plan skip_all =>
+      'You should define REDIS_CONNECTOR_TEST_SERVER environment valiable'
+    . ' to run these tests'
+    if !$TEST_SERVER;
+plan tests => 15;
 
 
 my $KEY        = 'REDIS-CONNECTOR-TEST:counter';
 my $INIT_VALUE = 343;
 
 
-my $redis = Redis::Connector->new();
+
+my $redis = Redis::Connector->new(server => $TEST_SERVER);
 isa_ok($redis->handle, 'Redis', 'handle() stores Redis instance');
 
 eval {
