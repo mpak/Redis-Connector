@@ -1,11 +1,15 @@
 NAME
-    Redis::Connector - wrapper around Redis
+    Redis::Connector - wrapper around Redis with autoreconnect support
 
 SYNOPSIS
         use Redis::Connector;
         my $conn = Redis::Connector->new();
         # or my $conn = Redis::Connector->new({});
+    
+        # access to Redis object
         $conn->handle->incr('foo');
+    
+        # transaction procession
         eval {
             my @values = $conn->transaction(sub {
                 my $r = shift;
@@ -19,8 +23,9 @@ SYNOPSIS
         }
 
 DESCRIPTION
-    Reconnect to Redis DB on ping() failures. Provide handy transaction
-    procession. Does not delegate to methods of Redis.
+    Reconnect to Redis DB after fork() or in case of ping() failures.
+    Provide handy transaction procession. Does not delegate to methods of
+    Redis.
 
 METHODS
   "new(arg => value)"
@@ -32,8 +37,9 @@ METHODS
         If present will automatically call auth() after connect.
 
   "handle()"
-    Return Redis instance. First it call ping() and in case of failure tries
-    create new Redis object.
+    Return Redis instance. First it checks that PID was not changed from
+    last time. Then calls ping() and in case of failure tries create new
+    Redis object.
 
   "transaction(CODE)"
     If error occured during transaction every following multi() will throw

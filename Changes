@@ -1,4 +1,7 @@
 Revision history for Redis::Connector
 
-0.01  Mon Sep 26 22:02:43 2011
+0.02  2011-09-27 00:00:00
+    - Reconnect after fork()
+
+0.01  2011-09-26 00:00:00
 	- First version

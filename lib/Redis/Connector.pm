@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Redis;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 
@@ -18,6 +18,7 @@ sub new {
         handle   => undef,
         conf     => \%args,
         password => $password,
+        pid      => 0,
     };
     return bless $self, ref $class || $class;
 }
@@ -27,8 +28,7 @@ sub new {
 sub handle {
     my $self  = shift;
     return $self->{handle}
-        if $self->{handle} 
-        && $self->{handle}->ping;
+        if $self->_is_connected();
     
     # try reconnect
     return $self->_connect();
@@ -59,10 +59,21 @@ sub transaction {
 sub _connect {
     my $self = shift;
     $self->{handle} = Redis->new(%{ $self->{conf} });
+    $self->{pid   } = $$;
     if ( $self->{password} ) {
         $self->{handle}->auth($self->{password});
     }
     return $self->{handle};
+}
+
+
+
+sub _is_connected {
+    my $self = shift;
+    return $self->{pid   } == $$
+        && $self->{handle} 
+        && $self->{handle}->ping
+        ;
 }
 
 
@@ -72,7 +83,7 @@ __END__
 
 =head1 NAME
 
-Redis::Connector - wrapper around Redis
+Redis::Connector - wrapper around Redis with autoreconnect support
 
 
 =head1 SYNOPSIS
@@ -80,7 +91,11 @@ Redis::Connector - wrapper around Redis
     use Redis::Connector;
     my $conn = Redis::Connector->new();
     # or my $conn = Redis::Connector->new({});
+    
+    # access to Redis object
     $conn->handle->incr('foo');
+    
+    # transaction procession
     eval {
         my @values = $conn->transaction(sub {
             my $r = shift;
@@ -96,7 +111,7 @@ Redis::Connector - wrapper around Redis
 
 =head1 DESCRIPTION
 
-Reconnect to Redis DB on ping() failures.
+Reconnect to Redis DB after fork() or in case of ping() failures.
 Provide handy transaction procession.
 Does not delegate to methods of Redis.
 
@@ -120,8 +135,8 @@ If present will automatically call auth() after connect.
 
 =head2 C<handle()>
 
-Return Redis instance.
-First it call ping() and in case of failure tries create new Redis object.
+Return Redis instance. First it checks that PID was not changed from last time.
+Then calls ping() and in case of failure tries create new Redis object.
 
 =head2 C<transaction(CODE)>
 
