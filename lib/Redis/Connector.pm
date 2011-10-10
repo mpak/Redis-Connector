@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Redis;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 
@@ -14,10 +14,12 @@ sub new {
         :                           @_
         ;
     my $password = delete $args{password};
+    my $dbindex  = delete $args{dbindex};
     my $self     = {
         handle   => undef,
         conf     => \%args,
         password => $password,
+        dbindex  => $dbindex,
         pid      => 0,
     };
     return bless $self, ref $class || $class;
@@ -62,6 +64,9 @@ sub _connect {
     $self->{pid   } = $$;
     if ( $self->{password} ) {
         $self->{handle}->auth($self->{password});
+    }
+    if ( $self->{dbindex} ) {
+        $self->{handle}->select($self->{dbindex});
     }
     return $self->{handle};
 }
@@ -130,6 +135,10 @@ Additional arguments:
 =item password
 
 If present will automatically call auth() after connect.
+
+=item dbindex
+
+Database index. Will be automatically selected after connect.
 
 =back
 

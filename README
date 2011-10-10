@@ -36,6 +36,9 @@ METHODS
     password
         If present will automatically call auth() after connect.
 
+    dbindex
+        Database index. Will be automatically selected after connect.
+
   "handle()"
     Return Redis instance. First it checks that PID was not changed from
     last time. Then calls ping() and in case of failure tries create new

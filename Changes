@@ -1,5 +1,8 @@
 Revision history for Redis::Connector
 
+0.03  2011-10-05 00:00:00
+    - Autoselect database after connect
+
 0.02  2011-09-27 00:00:00
     - Reconnect after fork()
 
